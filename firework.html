@@ -1,29 +1,84 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Pháo Hoa 🎆🧨</title>
-  <style>
-    html, body {
+<meta charset="UTF-8">
+<title>Pháo hoa 🎆</title>
+<style>
+html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: black;
+  background: black;
 }
-
 canvas {
-  display: block;
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 0;
+  z-index: 1;
 }
-  </style>
+
+.wish-container {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.wish-container.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.wish-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 10px;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.5),
+              0 0 60px rgba(255, 215, 0, 0.3);
+  margin-bottom: 15px;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5),
+                0 0 40px rgba(255, 215, 0, 0.3);
+  }
+  to {
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.8),
+                0 0 80px rgba(255, 215, 0, 0.6);
+  }
+}
+
+.wish-text {
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  text-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.8),
+    0 0 20px rgba(255, 215, 0, 0.6),
+    0 0 30px rgba(255, 215, 0, 0.4);
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  border: 2px solid rgba(255, 215, 0, 0.5);
+}
+</style>
 </head>
 <body>
-  <canvas id="fireworks"></canvas>
-  <script>
-    const canvas = document.getElementById("fireworks");
+
+<canvas id="fireworks"></canvas>
+
+<script>
+/* ===================== CANVAS ===================== */
+const canvas = document.getElementById("fireworks");
 const ctx = canvas.getContext("2d");
 let cw, ch;
 
@@ -37,13 +92,164 @@ resize();
 function random(min, max) {
   return Math.random() * (max - min) + min;
 }
-
-function distance(aX, aY, bX, bY) {
-  const dx = bX - aX;
-  const dy = bY - aY;
-  return Math.sqrt(dx * dx + dy * dy);
+function distance(x1, y1, x2, y2) {
+  return Math.hypot(x2 - x1, y2 - y1);
 }
 
+/* ===================== WISHES & IMAGES ===================== */
+// Mảng câu chúc - bạn có thể thêm/sửa các câu chúc ở đây
+const wishes = [
+  "Chúc mừng năm mới!",
+  "An khang thịnh vượng!",
+  "Vạn sự như ý!",
+  "Tấn tài tấn lộc!",
+  "Sức khỏe dồi dào!",
+  "Mãi bên nhau bạn nhé!",
+  "Thành công rực rỡ!",
+  "May mắn cả năm!",
+  "Yêu em rất nhiều!",
+  "Gia đình hạnh phúc!"
+];
+
+// Mảng đường dẫn ảnh - bạn có thể thêm đường dẫn ảnh vào đây
+// Ví dụ: ["images/img1.jpg", "images/img2.png", ...]
+const imagePaths = [
+  // Thêm đường dẫn ảnh của bạn vào đây
+  "images/Anh (1).jpg",
+  "images/Anh (2).jpg",
+  "images/Anh (3).jpg",
+  "images/Anh (4).jpg",
+  "images/Anh (5).jpg",
+  "images/Anh (6).jpg",
+  "images/Anh (7).jpg",
+  "images/Anh (8).jpg",
+  "images/Anh (9).jpg",
+
+];
+
+// Hàm lấy ảnh ngẫu nhiên
+function getRandomImage() {
+  if (imagePaths.length === 0) return null;
+  return imagePaths[Math.floor(Math.random() * imagePaths.length)];
+}
+
+// Hàm lấy câu chúc ngẫu nhiên
+function getRandomWish() {
+  return wishes[Math.floor(Math.random() * wishes.length)];
+}
+
+// Hiển thị ảnh và câu chúc khi pháo hoa nổ
+function showWishAndImage(x, y) {
+  const wish = getRandomWish();
+  const imagePath = getRandomImage();
+  
+  // Tạo container
+  const container = document.createElement('div');
+  container.className = 'wish-container';
+  container.style.left = x + 'px';
+  container.style.top = y + 'px';
+  container.style.transform = 'translate(-50%, -50%)';
+  
+  // Thêm ảnh nếu có
+  if (imagePath) {
+    const img = document.createElement('img');
+    img.src = imagePath;
+    img.className = 'wish-image';
+    img.alt = 'Wish Image';
+    img.onerror = () => {
+      // Nếu ảnh lỗi, ẩn ảnh đi
+      img.style.display = 'none';
+    };
+    container.appendChild(img);
+  }
+  
+  // Thêm câu chúc
+  const text = document.createElement('div');
+  text.className = 'wish-text';
+  text.textContent = wish;
+  container.appendChild(text);
+  
+  document.body.appendChild(container);
+  
+  // Hiển thị với animation
+  setTimeout(() => {
+    container.classList.add('show');
+  }, 10);
+  
+  // Ẩn và xóa sau 1.5 giây
+  setTimeout(() => {
+    container.classList.remove('show');
+    setTimeout(() => {
+      container.remove();
+    }, 500);
+  }, 1500);
+}
+
+/* ===================== AUDIO ===================== */
+const fireworkSoundUrl =
+  "https://pic.pikbest.com/17/97/21/79v888piCusf.mp3";
+
+// giới hạn âm thanh đồng thời
+let activeSounds = 0;
+const MAX_ACTIVE_SOUNDS = 4;
+let audioEnabled = false;
+
+// Tự động kích hoạt audio ngay khi trang load
+function enableAudio() {
+  if (audioEnabled) return;
+  audioEnabled = true;
+  
+  // Tạo và play một audio ngắn để unlock audio context
+  const unlockAudio = new Audio(fireworkSoundUrl);
+  unlockAudio.volume = 0.01;
+  unlockAudio.play().then(() => {
+    unlockAudio.pause();
+    unlockAudio.currentTime = 0;
+  }).catch(() => {});
+}
+
+// Enable audio ngay khi DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', enableAudio);
+} else {
+  enableAudio();
+}
+
+// Thử enable ngay khi load
+window.addEventListener('load', () => {
+  enableAudio();
+});
+
+// Tự động enable audio khi có bất kỳ tương tác nào (backup)
+const enableAudioEvents = ['click', 'touchstart', 'mousedown', 'keydown', 'mousemove'];
+enableAudioEvents.forEach(event => {
+  document.addEventListener(event, enableAudio, { once: true });
+});
+
+function createAudio(volume) {
+  const audio = new Audio(fireworkSoundUrl);
+  audio.volume = volume;
+  audio.preload = "auto";
+  // Thử load ngay
+  audio.load();
+  return audio;
+}
+
+function playLimited(audio) {
+  if (!audio || activeSounds >= MAX_ACTIVE_SOUNDS) return;
+  
+  // Tự động enable nếu chưa enable
+  if (!audioEnabled) {
+    enableAudio();
+  }
+  
+  activeSounds++;
+  audio.currentTime = 0;
+  audio.play().catch(()=>{});
+  audio.onended = () => activeSounds--;
+}
+
+/* ===================== FIREWORK ===================== */
 class Firework {
   constructor(sx, sy, tx, ty) {
     this.x = sx;
@@ -52,35 +258,72 @@ class Firework {
     this.sy = sy;
     this.tx = tx;
     this.ty = ty;
+
     this.distanceToTarget = distance(sx, sy, tx, ty);
     this.distanceTraveled = 0;
+
+    this.angle = Math.atan2(ty - sy, tx - sx);
+    this.speed = 18;
+    this.acceleration = 1.06;
+    this.brightness = random(50, 70);
+
     this.coordinates = [];
-    this.coordinateCount = 3;
-    while(this.coordinateCount--) {
+    for (let i = 0; i < 3; i++) {
       this.coordinates.push([this.x, this.y]);
     }
-    this.angle = Math.atan2(ty - sy, tx - sx);
-    this.speed = 10;
-    this.acceleration = 1.08;
-    this.brightness = random(50, 70);
-    this.targetRadius = 8;
+
+    // 🔊 chỉ ~35% pháo có tiếng
+    this.hasSound = Math.random() < 0.35;
+
+    this.launchSound = this.hasSound ? createAudio(0.2) : null;
+    this.explosionSound = this.hasSound ? createAudio(0.35) : null;
+
+    this.launchPlayed = false;
+    this.exploded = false;
   }
 
   update(index) {
+    // âm bắn (1 lần)
+    if (this.hasSound && !this.launchPlayed) {
+      const heightFactor = 1 - this.y / ch;
+      this.launchSound.volume = 0.1 + heightFactor * 0.15;
+      playLimited(this.launchSound);
+      this.launchPlayed = true;
+    }
+
     this.coordinates.pop();
     this.coordinates.unshift([this.x, this.y]);
 
-    if(this.targetRadius < 8) this.targetRadius += 0.3;
     this.speed *= this.acceleration;
 
     const vx = Math.cos(this.angle) * this.speed;
     const vy = Math.sin(this.angle) * this.speed;
-    this.distanceTraveled = distance(this.sx, this.sy, this.x + vx, this.y + vy);
 
-    if(this.distanceTraveled >= this.distanceToTarget) {
-      // 35% cơ hội tạo trái tim, 65% tạo pháo hoa bình thường
-      const isHeart = Math.random() < 0.35;
-      createParticles(this.tx, this.ty, isHeart);
+    this.distanceTraveled = distance(
+      this.sx,
+      this.sy,
+      this.x + vx,
+      this.y + vy
+    );
+
+    if (this.distanceTraveled >= this.distanceToTarget) {
+      if (!this.exploded) {
+        createParticles(this.tx, this.ty);
+
+        // Hiển thị ảnh và câu chúc khi nổ (10% cơ hội - ít hơn cho đẹp)
+        if (Math.random() < 0.1) {
+          showWishAndImage(this.tx, this.ty);
+        }
+
+        if (this.hasSound) {
+          const heightFactor = 1 - this.y / ch;
+          this.explosionSound.volume = 0.2 + heightFactor * 0.25;
+          // delay nhẹ để nghe tự nhiên
+          setTimeout(() => playLimited(this.explosionSound), random(30, 80));
+        }
+
+        this.exploded = true;
+      }
       fireworks.splice(index, 1);
     } else {
       this.x += vx;
@@ -90,162 +333,81 @@ class Firework {
 
   draw() {
     ctx.beginPath();
-    ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+    ctx.moveTo(
+      this.coordinates[this.coordinates.length - 1][0],
+      this.coordinates[this.coordinates.length - 1][1]
+    );
     ctx.lineTo(this.x, this.y);
-    ctx.strokeStyle = `hsl(${random(0, 360)}, 100%, ${this.brightness}%)`;
+    ctx.strokeStyle = `hsl(${random(0,360)},100%,${this.brightness}%)`;
     ctx.stroke();
-
-    // ctx.beginPath();
-    // ctx.arc(this.tx, this.ty, this.targetRadius, 0, Math.PI * 2);
-    // ctx.stroke();
   }
 }
 
+/* ===================== PARTICLE ===================== */
 class Particle {
-  constructor(x, y, isHeart = false, heartAngle = 0, heartDistance = 0) {
+  constructor(x, y) {
     this.x = x;
     this.y = y;
+    this.angle = random(0, Math.PI * 2);
+    this.speed = random(2, 7);
+    this.friction = 0.95;
+    this.gravity = 0.25;
+    this.hue = random(0, 360);
+    this.brightness = random(50, 80);
+    this.alpha = 1;
+    this.decay = random(0.005, 0.01);
+
     this.coordinates = [];
-    this.coordinateCount = 8;
-    while(this.coordinateCount--) {
+    for (let i = 0; i < 6; i++) {
       this.coordinates.push([this.x, this.y]);
     }
-    if (isHeart) {
-      // Tạo hạt theo hình trái tim - bay ra từ vị trí trên đường trái tim
-      this.angle = heartAngle;
-      this.speed = random(4, 7);
-      this.initialDistance = heartDistance;
-      // Màu hồng/tím cho trái tim - sáng hơn
-      this.hue = random(300, 340); // Pink/Purple range
-      this.brightness = random(80, 100);
-    } else {
-      this.angle = random(0, Math.PI * 2);
-      this.speed = random(2, 8);
-      this.initialDistance = 0;
-      this.hue = random(0, 360);
-      this.brightness = random(50, 80);
-    }
-    this.friction = 0.97;
-    this.gravity = 0.2;
-    this.alpha = 1;
-    this.decay = random(0.004, 0.008); // Chậm hơn nhiều
-    this.isHeart = isHeart;
   }
 
   update(index) {
     this.coordinates.pop();
     this.coordinates.unshift([this.x, this.y]);
-    this.speed *= this.friction;
-    
-    if (this.isHeart) {
-      // Hạt trái tim bay ra ngoài từ tâm theo hướng đã định
-      this.x += Math.cos(this.angle) * this.speed;
-      this.y += Math.sin(this.angle) * this.speed + this.gravity * 0.3;
-    } else {
-      this.x += Math.cos(this.angle) * this.speed;
-      this.y += Math.sin(this.angle) * this.speed + this.gravity;
-    }
-    
-    this.alpha -= this.decay;
 
-    if(this.alpha <= 0) {
+    this.speed *= this.friction;
+    this.x += Math.cos(this.angle) * this.speed;
+    this.y += Math.sin(this.angle) * this.speed + this.gravity;
+
+    this.alpha -= this.decay;
+    if (this.alpha <= 0) {
       particles.splice(index, 1);
     }
   }
 
   draw() {
     ctx.beginPath();
-    ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+    ctx.moveTo(
+      this.coordinates[this.coordinates.length - 1][0],
+      this.coordinates[this.coordinates.length - 1][1]
+    );
     ctx.lineTo(this.x, this.y);
-    
-    if (this.isHeart) {
-      // Trái tim có độ dày và sáng hơn
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
-      // Thêm glow effect
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha * 0.5})`;
-    } else {
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
-      ctx.shadowBlur = 0;
-    }
+    ctx.strokeStyle =
+      `hsla(${this.hue},100%,${this.brightness}%,${this.alpha})`;
     ctx.stroke();
-    ctx.lineWidth = 1; // Reset về mặc định
-    ctx.shadowBlur = 0; // Reset shadow
   }
 }
 
-// Hàm tạo phương trình trái tim
-function heartShape(t, scale = 1) {
-  // Phương trình tham số của trái tim
-  const x = scale * 16 * Math.pow(Math.sin(t), 3);
-  const y = scale * -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
-  return { x, y };
+/* ===================== CREATE PARTICLES ===================== */
+function createParticles(x, y) {
+  let count = 30;
+  while (count--) particles.push(new Particle(x, y));
 }
 
-function createParticles(x, y, isHeart = false) {
-  if (isHeart) {
-    // Tạo hạt theo hình trái tim - đặt trực tiếp trên đường trái tim
-    const scale = 4; // Kích thước trái tim
-    const particleCount = 150; // Số điểm trên đường trái tim
-    
-    // Tạo các hạt dọc theo đường trái tim
-    for (let i = 0; i < particleCount; i++) {
-      const t = (i / particleCount) * Math.PI * 2;
-      const heart = heartShape(t, scale);
-      
-      // Tính góc pháp tuyến (normal) của đường trái tim để hạt bay ra ngoài
-      const dt = 0.05;
-      const heartNext = heartShape(t + dt, scale);
-      const dx = heartNext.x - heart.x;
-      const dy = heartNext.y - heart.y;
-      // Góc pháp tuyến (vuông góc với tiếp tuyến)
-      const tangentAngle = Math.atan2(dy, dx);
-      const normalAngle = tangentAngle + Math.PI / 2;
-      
-      // Tạo nhiều hạt trên mỗi điểm để tạo độ dày
-      const layers = 4;
-      for (let layer = 0; layer < layers; layer++) {
-        // Đặt hạt ở vị trí trên đường trái tim, hơi lùi vào trong một chút
-        const offsetFactor = 0.7 + (layer / layers) * 0.3; // Từ 0.7 đến 1.0
-        const particleX = x + heart.x * offsetFactor;
-        const particleY = y + heart.y * offsetFactor;
-        
-        // Góc bay ra ngoài (theo hướng pháp tuyến)
-        let angle = normalAngle;
-        // Thêm một chút ngẫu nhiên nhỏ để tự nhiên hơn
-        angle += random(-0.15, 0.15);
-        
-        const particle = new Particle(particleX, particleY, true, angle, 0);
-        particles.push(particle);
-      }
-    }
-    
-    // Thêm một số hạt ở tâm để tạo độ sáng
-    for (let i = 0; i < 30; i++) {
-      const randomAngle = random(0, Math.PI * 2);
-      const particle = new Particle(x, y, true, randomAngle, 0);
-      particles.push(particle);
-    }
-  } else {
-    // Tạo hạt bình thường
-    let particleCount = 30;
-    while(particleCount--) {
-      particles.push(new Particle(x, y));
-    }
-  }
-}
-
+/* ===================== LOOP ===================== */
 let fireworks = [];
 let particles = [];
+let lastFireworkTime = 0;
 
 function loop() {
   requestAnimationFrame(loop);
-  ctx.globalCompositeOperation = 'destination-out';
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+
+  ctx.globalCompositeOperation = "destination-out";
+  ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.fillRect(0, 0, cw, ch);
-  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalCompositeOperation = "lighter";
 
   for (let i = fireworks.length - 1; i >= 0; i--) {
     fireworks[i].draw();
@@ -257,23 +419,16 @@ function loop() {
     particles[i].update(i);
   }
 
-  // Bắn pháo hoa liên tục hơn, không cần đợi quá nhiều
-  if(fireworks.length < 8) {
-    // Bắn từ nhiều điểm ngẫu nhiên ở dưới cùng màn hình, bắn thẳng lên
-    const startX = random(50, cw - 50); // Vị trí ngẫu nhiên ở dưới cùng
-    const startY = ch; // Luôn từ dưới cùng
-    const targetX = startX; // Cùng vị trí X để bắn thẳng lên
-    const targetY = random(50, ch / 2); // Mục tiêu ở nửa trên màn hình
-    
-    fireworks.push(new Firework(
-      startX,
-      startY,
-      targetX,
-      targetY
-    ));
+  const now = Date.now();
+  if (fireworks.length < 25 && now - lastFireworkTime > 120) {
+    const x = random(80, cw - 80);
+    const ty = random(60, ch / 2);
+    fireworks.push(new Firework(x, ch, x, ty));
+    lastFireworkTime = now;
   }
 }
 loop();
-  </script>
+</script>
+
 </body>
 </html>

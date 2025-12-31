@@ -193,44 +193,112 @@ const fireworkSoundUrl =
 let activeSounds = 0;
 const MAX_ACTIVE_SOUNDS = 4;
 let audioEnabled = false;
+let audioContext = null;
 
-// Tự động kích hoạt audio ngay khi trang load
+// Tạo AudioContext để unlock tốt hơn
+function getAudioContext() {
+  if (!audioContext) {
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      return null;
+    }
+  }
+  return audioContext;
+}
+
+// Unlock audio context
+function unlockAudioContext() {
+  const ctx = getAudioContext();
+  if (ctx && ctx.state === 'suspended') {
+    ctx.resume().then(() => {
+      audioEnabled = true;
+    }).catch(() => {});
+  }
+}
+
+// Tự động kích hoạt audio - tự phát ngay
 function enableAudio() {
   if (audioEnabled) return;
-  audioEnabled = true;
   
-  // Tạo và play một audio ngắn để unlock audio context
+  // Unlock audio context
+  unlockAudioContext();
+  
+  // Tạo và play một audio ngắn để unlock - tự động phát
   const unlockAudio = new Audio(fireworkSoundUrl);
   unlockAudio.volume = 0.01;
   unlockAudio.play().then(() => {
     unlockAudio.pause();
     unlockAudio.currentTime = 0;
-  }).catch(() => {});
+    audioEnabled = true;
+  }).catch(() => {
+    audioEnabled = true;
+  });
+}
+
+// Tự động trigger user interaction để unlock audio (cho mobile)
+function autoUnlockAudio() {
+  // Tạo một event click/touch giả để unlock audio
+  const event = new Event('touchstart', { bubbles: true });
+  document.dispatchEvent(event);
+  
+  // Thử click vào canvas
+  const canvas = document.getElementById('fireworks');
+  if (canvas) {
+    canvas.click();
+  }
+  
+  // Thử enable audio
+  enableAudio();
 }
 
 // Enable audio ngay khi DOM ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', enableAudio);
+  document.addEventListener('DOMContentLoaded', () => {
+    enableAudio();
+    setTimeout(autoUnlockAudio, 100);
+  });
 } else {
   enableAudio();
+  setTimeout(autoUnlockAudio, 100);
 }
 
 // Thử enable ngay khi load
 window.addEventListener('load', () => {
   enableAudio();
+  setTimeout(autoUnlockAudio, 200);
 });
 
-// Tự động enable audio khi có bất kỳ tương tác nào (backup)
-const enableAudioEvents = ['click', 'touchstart', 'mousedown', 'keydown', 'mousemove'];
-enableAudioEvents.forEach(event => {
-  document.addEventListener(event, enableAudio, { once: true });
+// Xử lý khi trang được hiển thị (quan trọng cho mobile)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    enableAudio();
+    unlockAudioContext();
+  }
 });
+
+// Tự động enable audio khi có bất kỳ tương tác nào
+const enableAudioEvents = ['click', 'touchstart', 'touchend', 'mousedown', 'keydown', 'keypress', 'mousemove', 'wheel'];
+enableAudioEvents.forEach(event => {
+  document.addEventListener(event, () => {
+    if (!audioEnabled) {
+      enableAudio();
+    } else {
+      unlockAudioContext();
+    }
+  }, { passive: true });
+});
+
+// Tự động thử unlock sau khi trang load xong (cho mobile)
+setTimeout(() => {
+  autoUnlockAudio();
+  enableAudio();
+}, 500);
 
 function createAudio(volume) {
   const audio = new Audio(fireworkSoundUrl);
   audio.volume = volume;
   audio.preload = "auto";
-  // Thử load ngay
   audio.load();
   return audio;
 }
@@ -238,10 +306,12 @@ function createAudio(volume) {
 function playLimited(audio) {
   if (!audio || activeSounds >= MAX_ACTIVE_SOUNDS) return;
   
-  // Tự động enable nếu chưa enable
+  // Tự động enable và unlock nếu chưa
   if (!audioEnabled) {
     enableAudio();
+    autoUnlockAudio();
   }
+  unlockAudioContext();
   
   activeSounds++;
   audio.currentTime = 0;
